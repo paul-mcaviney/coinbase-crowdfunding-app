@@ -39,7 +39,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <img src={elon} className="Elon" alt="Elon holding the Twitter logo" />
-        <p>
+        <p className="MainText">
           Let's buy Twitter before Elon does!
         </p>
         {/* this button should change depending if the user is connected or not*/}

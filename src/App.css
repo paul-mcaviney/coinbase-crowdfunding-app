@@ -13,10 +13,13 @@ html {
 
 .App-logo {
     height: 40vmin;
-    
 }
 
 .Elon {
     margin-top: 100px;
     height: 40vmin;
+}
+
+.MainText {
+    font-size: 2rem; 
 }
