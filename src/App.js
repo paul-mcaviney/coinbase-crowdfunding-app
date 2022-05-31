@@ -38,7 +38,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={elon} alt="Elon holding the Twitter logo" />
+        <img src={elon} className="Elon" alt="Elon holding the Twitter logo" />
         <p>
           Let's buy Twitter before Elon does!
         </p>
