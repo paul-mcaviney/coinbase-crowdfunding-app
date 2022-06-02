@@ -6,33 +6,107 @@ import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
 const Web3 = require('web3'); 
 
 const APP_NAME = 'Crowdfunding App'
-//const APP_LOGO_URL = 'https://example.com/logo.png'
-const DEFAULT_ETH_JSONRPC_URL = 'https://mainnet.infura.io/v3/<YOUR_INFURA_API_KEY>';
-const DEFAULT_CHAIN_ID = 3; // Ropsten Network ID
+const APP_LOGO_URL = './elon.jpg'
+const RPC_URL = '<YOUR_INFURA_RPC_URL>'; // Node provider URL required for backup
+const CHAIN_ID = 3; // Ropsten Network ID
+
+// The wallet address for our multisig to send donations to
+const WALLET_ADDRESS = "<MULTISIG_WALLET_ADDRESS>";
 
 // Initialize Coinbase Wallet SDK
 export const coinbaseWallet = new CoinbaseWalletSDK({
     appName: APP_NAME,
-})
+    appLogoUrl: APP_LOGO_URL, 
+});
 
 // Initialize Web3 Provider
-export const ethereum = coinbaseWallet.makeWeb3Provider('', DEFAULT_CHAIN_ID);
+export const walletSDKProvider = coinbaseWallet.makeWeb3Provider(RPC_URL, CHAIN_ID);
 
 // Initialize Web3 object
-export const web3 = new Web3(ethereum);
-console.log(web3);
+export const web3 = new Web3(walletSDKProvider);
 
-function App() {
 
+const App = () => {
+
+    
     // State Variables
+    const [ethereum, setEthereum] = useState();
     const [isConnected, setIsConnected] = useState(false);
+    const [account, setAccount] = useState();
+
+    //let ethereum;
+
+    const checkIfWalletIsConnected = async () => {
+
+        try {
+            if (!ethereum) {
+                console.log("No ethereum object found, please install Coinbase Wallet extension or similar");
+                web3.setProvider(walletSDKProvider.enable());
+            } else {
+                console.log("Found the ethereum object:", ethereum);
+                connectWallet();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+          
+    }
 
 
-    const connectWallet = () => {
-        // insert the coinbase wallet sdk initialization here I think
-        console.log("Connecting wallet dialogue")
+    const connectWallet = async () => {
+
+        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+
+            if (accounts.length !== 0) {
+                const account = accounts[0];
+                console.log("Found an authorized account:", account);
+                setAccount(account);
+
+                // Add the Ropsten Network to wallet
+                try {
+                    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x3"}]});
+                    console.log("Successfully switched to Ropsten Network");
+                } catch (error) {
+                    console.error(error);
+                }
+
+            } else {
+                console.log("No authorized account found");
+            }
+
         setIsConnected(!isConnected);
     }
+
+    const donateETH = async () => {
+        // Function to donate ETH to the specified wallet address
+        if (account && ethereum) {
+           const receipt = await ethereum.request({
+               method: "eth_sendTransaction",
+               params: [{
+                   from: account,
+                   to: WALLET_ADDRESS,
+                   value: "100000"
+               }]
+           }) 
+
+           console.log("Thank you for donating!");
+           console.log(receipt);
+
+        } else {
+            console.log("Not connected");
+        }
+    }
+
+    useEffect(() => {
+        // Check if the Ethereum object is available        
+        setEthereum(window.ethereum);
+
+        if(!ethereum) {
+            console.log("No ethereum object found");
+        } else {
+            console.log("ethereum object found");
+        }
+    }, [])
 
 
   return (
@@ -42,10 +116,14 @@ function App() {
         <p className="MainText">
           Let's buy Twitter before Elon does!
         </p>
+        
         {/* this button should change depending if the user is connected or not*/}
         {!isConnected ? (
-            <button onClick={connectWallet} className="button" name="connectButton" id="connectButton">Connect Wallet</button>
-        ) : <button onClick={connectWallet} className="button" name="connectButton" id="connectButton">Please Donate</button>
+            <button onClick={checkIfWalletIsConnected} className="button" name="connectButton" id="connectButton">Connect Wallet</button>
+        ) : <div>
+                <p>Connected Account: {account}</p>
+                <button onClick={donateETH} className="button" name="connectButton" id="connectButton">Please Donate</button>
+            </div>
         }
 
       </header>
