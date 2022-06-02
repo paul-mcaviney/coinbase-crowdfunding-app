@@ -41,6 +41,8 @@ const App = () => {
         try {
             if (!ethereum) {
                 console.log("No ethereum object found, please install Coinbase Wallet extension or similar");
+
+                // Enable the provider and cause the Coinbase Onboarding UI to pop up
                 web3.setProvider(walletSDKProvider.enable());
             } else {
                 console.log("Found the ethereum object:", ethereum);
