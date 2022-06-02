@@ -35,8 +35,6 @@ const App = () => {
     const [isConnected, setIsConnected] = useState(false);
     const [account, setAccount] = useState();
 
-    //let ethereum;
-
     const checkIfWalletIsConnected = async () => {
 
         try {
