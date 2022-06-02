@@ -12,6 +12,7 @@ const CHAIN_ID = 3; // Ropsten Network ID
 
 // The wallet address for our multisig to send donations to
 const WALLET_ADDRESS = "<MULTISIG_WALLET_ADDRESS>";
+const DONATION_AMOUNT = "10000"; // change this to however much wyou like NOTE: this value is in `wei` not `ETH`
 
 // Initialize Coinbase Wallet SDK
 export const coinbaseWallet = new CoinbaseWalletSDK({
@@ -87,7 +88,7 @@ const App = () => {
                params: [{
                    from: account,
                    to: WALLET_ADDRESS,
-                   value: "100000"
+                   value: DONATION_AMOUNT
                }]
            }) 
 
