@@ -98,6 +98,10 @@ const App = () => {
         }
     }
 
+    const resetCoinbase = async () => {
+        walletSDKProvider.close();
+    }
+
     useEffect(() => {
         // Check if the Ethereum object is available        
         setEthereum(window.ethereum);
@@ -128,6 +132,7 @@ const App = () => {
         }
 
       </header>
+      <button onClick={resetCoinbase}>reset</button>
     </div>
   );
 }
