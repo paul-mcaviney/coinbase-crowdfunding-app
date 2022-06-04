@@ -1,140 +1,140 @@
+import React, { useState } from 'react';
+import Web3 from 'web3';
+import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
 import elon from './elon.jpg';
 import './App.css';
-import React, { useState, useEffect } from 'react';
-import CoinbaseWalletSDK from '@coinbase/wallet-sdk';
 
-const Web3 = require('web3'); 
-
-const APP_NAME = 'Crowdfunding App'
-const APP_LOGO_URL = './elon.jpg'
-const RPC_URL = '<YOUR_INFURA_RPC_URL>'; // Node provider URL required for backup
+const APP_NAME = 'Coinbase Crowdfunding App';
+const APP_LOGO_URL = './elon.jpg';
+const RPC_URL = process.env.REACT_APP_INFURA_RPC_URL;
 const CHAIN_ID = 3; // Ropsten Network ID
-
-// The wallet address for our multisig to send donations to
-const WALLET_ADDRESS = "<MULTISIG_WALLET_ADDRESS>";
-const DONATION_AMOUNT = "10000"; // change this to however much wyou like NOTE: this value is in `wei` not `ETH`
+const RECEIVING_WALLET_ADDRESS = process.env.REACT_APP_RECEIVING_WALLET_ADDRESS;
 
 // Initialize Coinbase Wallet SDK
-export const coinbaseWallet = new CoinbaseWalletSDK({
-    appName: APP_NAME,
-    appLogoUrl: APP_LOGO_URL, 
+const coinbaseWallet = new CoinbaseWalletSDK({
+  appName: APP_NAME,
+  appLogoUrl: APP_LOGO_URL,
 });
 
 // Initialize Web3 Provider
-export const walletSDKProvider = coinbaseWallet.makeWeb3Provider(RPC_URL, CHAIN_ID);
+const walletSDKProvider = coinbaseWallet.makeWeb3Provider(RPC_URL, CHAIN_ID);
 
 // Initialize Web3 object
-export const web3 = new Web3(walletSDKProvider);
-
+const web3 = new Web3(walletSDKProvider);
 
 const App = () => {
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [account, setAccount] = useState();
 
-    
-    // State Variables
-    const [ethereum, setEthereum] = useState();
-    const [isConnected, setIsConnected] = useState(false);
-    const [account, setAccount] = useState();
+  const checkIfWalletIsConnected = () => {
+    if (!window.ethereum) {
+      console.log(
+        'No ethereum object found. Please install Coinbase Wallet extension or similar.'
+      );
 
-    const checkIfWalletIsConnected = async () => {
+      // Enable the provider and cause the Coinbase Onboarding UI to pop up
+      web3.setProvider(walletSDKProvider.enable());
 
-        try {
-            if (!ethereum) {
-                console.log("No ethereum object found, please install Coinbase Wallet extension or similar");
-
-                // Enable the provider and cause the Coinbase Onboarding UI to pop up
-                web3.setProvider(walletSDKProvider.enable());
-            } else {
-                console.log("Found the ethereum object:", ethereum);
-                connectWallet();
-            }
-        } catch (error) {
-            console.error(error);
-        }
-          
+      return;
     }
 
+    console.log('Found the ethereum object:', window.ethereum);
+    connectWallet();
+  };
 
-    const connectWallet = async () => {
+  const connectWallet = async () => {
+    const accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts',
+    });
 
-        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-
-            if (accounts.length !== 0) {
-                const account = accounts[0];
-                console.log("Found an authorized account:", account);
-                setAccount(account);
-
-                // Add the Ropsten Network to wallet
-                try {
-                    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x3"}]});
-                    console.log("Successfully switched to Ropsten Network");
-                } catch (error) {
-                    console.error(error);
-                }
-
-            } else {
-                console.log("No authorized account found");
-            }
-
-        setIsConnected(!isConnected);
+    if (!accounts.length) {
+      console.log('No authorized account found');
+      return;
     }
 
-    const donateETH = async () => {
-        // Function to donate ETH to the specified wallet address
-        if (account && ethereum) {
-           const receipt = await ethereum.request({
-               method: "eth_sendTransaction",
-               params: [{
-                   from: account,
-                   to: WALLET_ADDRESS,
-                   value: DONATION_AMOUNT
-               }]
-           }) 
+    if (accounts.length) {
+      const account = accounts[0];
+      console.log('Found an authorized account:', account);
+      setAccount(account);
 
-           console.log("Thank you for donating!");
-           console.log(receipt);
-
-        } else {
-            console.log("Not connected");
-        }
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0x3' }],
+        });
+        console.log('Successfully switched to Ropsten Network');
+      } catch (error) {
+        console.error(error);
+      }
     }
 
-    const resetCoinbase = async () => {
-        walletSDKProvider.close();
+    setIsWalletConnected(true);
+  };
+
+  const donateETH = async () => {
+    if (!account || !window.ethereum) {
+      console.log('Wallet is not connected');
+      return;
     }
 
-    useEffect(() => {
-        // Check if the Ethereum object is available        
-        setEthereum(window.ethereum);
+    const donationAmount = document.querySelector('#donationAmount').value;
 
-        if(!ethereum) {
-            console.log("No ethereum object found");
-        } else {
-            console.log("ethereum object found");
-        }
-    }, [])
+    const receipt = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: account,
+          to: RECEIVING_WALLET_ADDRESS,
+          value: donationAmount,
+        },
+      ],
+    });
 
+    console.log(`Thank you for donating! Here's your receipt: ${receipt}`);
+  };
+
+  const resetCoinbaseWalletConnection = () => {
+    walletSDKProvider.close();
+  };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={elon} className="Elon" alt="Elon holding the Twitter logo" />
-        <p className="MainText">
-          Let's buy Twitter before Elon does!
-        </p>
-        
-        {/* this button should change depending if the user is connected or not*/}
-        {!isConnected ? (
-            <button onClick={checkIfWalletIsConnected} className="button" name="connectButton" id="connectButton">Connect Wallet</button>
-        ) : <div>
-                <p>Connected Account: {account}</p>
-                <button onClick={donateETH} className="button" name="connectButton" id="connectButton">Please Donate</button>
-            </div>
-        }
-
+    <main className="app">
+      <header>
+        <img
+          src={elon}
+          className="headerImage"
+          alt="Elon holding the Twitter logo"
+        />
+        <h1>Let's buy Twitter before Elon does!</h1>
       </header>
-      <button onClick={resetCoinbase}>reset</button>
-    </div>
+
+      {isWalletConnected ? (
+        <>
+          <p>Connected Account: {account}</p>
+          <div>
+            <input type="number" id="donationAmount" defaultValue={10000} />
+            <label htmlFor="donationAmount">WEI</label>
+            <button onClick={donateETH} id="donate" type="button">
+              Donate
+            </button>
+          </div>
+          <div>
+            <button
+              id="reset"
+              type="button"
+              onClick={resetCoinbaseWalletConnection}
+            >
+              Reset Connection
+            </button>
+          </div>
+        </>
+      ) : (
+        <button onClick={checkIfWalletIsConnected} id="connect" type="button">
+          Connect Wallet
+        </button>
+      )}
+    </main>
   );
-}
+};
 
 export default App;
