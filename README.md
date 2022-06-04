@@ -1,4 +1,4 @@
-# coinbase-crowdfunding-app
+# Coinbase Crowdfunding App
 
 A simple crowdfunding app using the Coinbase Wallet SDK
 
@@ -18,4 +18,6 @@ A simple crowdfunding app using the Coinbase Wallet SDK
 
 ## Using the App
 
-TODO
+1. Click the "Connect" button to connect your wallet to the app. This could be something like a Coinbase or MetaMask wallet.
+2. Once your wallet is connected, update the value in the number input to set your donation amount. The values are in WEI, the smallest denomination of ETH.
+3. Click the "Donate" button to initiate the transaction. This will cause your wallet browser extension to pop up so that you can confirm or reject the transaction.
